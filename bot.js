@@ -1,13 +1,13 @@
 const https = require("https");
 
-const BOT_TOKEN = "7901264784:AAHKXPy03fC_-i4YQy99ejZ-88zrA8mBbGc";
+const BOT_TOKEN = "8109346917:AAE6RcgiyZ9wnszuyl5GdcwnRlG4RLexjxA";  // Updated API token
 const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 const type1ChatIds = [-1002367915435]; // The chat ID for Type 1 group
 const type2ChatIds = [-1002406219010]; // The chat ID for Type 2 group
 
 // Owner's chat ID (Set this to the owner's chat ID)
-const ownerChatId = "7483100769"; // Replace with actual owner chat ID
+const ownerChatId = "YOUR_OWNER_CHAT_ID"; // Replace with actual owner chat ID
 
 // Cache group invite links
 const groupInviteLinks = {};
