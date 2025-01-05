@@ -7,7 +7,7 @@ const type1ChatIds = [-1002367915435]; // The chat ID for Type 1 group
 const type2ChatIds = [-1002406219010]; // The chat ID for Type 2 group
 
 // Owner's chat ID (Set this to the owner's chat ID)
-const ownerChatId = "YOUR_OWNER_CHAT_ID"; // Replace with actual owner chat ID
+const ownerChatId = "7483100769"; // Replace with actual owner chat ID
 
 // Cache group invite links
 const groupInviteLinks = {};
