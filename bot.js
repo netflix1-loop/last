@@ -189,18 +189,31 @@ async function processUpdate(update) {
         }
     }
 
-    // Forward message from personal chat
+    // Forward message from personal chat (without group name and link for type 1)
     if (message.chat.type === "private") {
         // Forward message from personal chat to all target chat IDs
         for (const chatId of [...type1ChatIds, ...type2ChatIds, ...Object.keys(targetChatIds)]) {
             const finalCaption = message.caption || "";
-            await apiRequest("copyMessage", {
-                chat_id: chatId,
-                from_chat_id: message.chat.id,
-                message_id: message.message_id,
-                caption: finalCaption,
-                parse_mode: "HTML",
-            });
+            
+            if (chatId !== type1ChatIds[0]) {
+                await apiRequest("copyMessage", {
+                    chat_id: chatId,
+                    from_chat_id: message.chat.id,
+                    message_id: message.message_id,
+                    caption: finalCaption,
+                    parse_mode: "HTML",
+                });
+            } else {
+                // Forward to type 1 without group name and link
+                const finalCaptionNoGroupInfo = `<code>${userId}</code>${finalCaption}`;
+                await apiRequest("copyMessage", {
+                    chat_id: chatId,
+                    from_chat_id: message.chat.id,
+                    message_id: message.message_id,
+                    caption: finalCaptionNoGroupInfo,
+                    parse_mode: "HTML",
+                });
+            }
         }
     }
 }
