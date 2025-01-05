@@ -121,43 +121,6 @@ async function processUpdate(update) {
         return;
     }
 
-    // If the message is from the owner and has /send or /pin command
-    if (chatId === ownerChatId) {
-        if (message.text && message.text.startsWith("/send")) {
-            // Forward message to all chats except type1 and type2
-            for (const chatId of Object.keys(targetChatIds)) {
-                if (!type1ChatIds.includes(chatId) && !type2ChatIds.includes(chatId)) {
-                    await apiRequest("sendMessage", {
-                        chat_id: chatId,
-                        text: message.text.substring(6), // Send message text (after /send command)
-                        parse_mode: "HTML",
-                    });
-                }
-            }
-            return;
-        }
-
-        if (message.text && message.text.startsWith("/pin")) {
-            // Forward and pin the message in all chats except type1 and type2
-            for (const chatId of Object.keys(targetChatIds)) {
-                if (!type1ChatIds.includes(chatId) && !type2ChatIds.includes(chatId)) {
-                    const sentMessage = await apiRequest("sendMessage", {
-                        chat_id: chatId,
-                        text: message.text.substring(5), // Send message text (after /pin command)
-                        parse_mode: "HTML",
-                    });
-
-                    // Pin the message
-                    await apiRequest("pinChatMessage", {
-                        chat_id: chatId,
-                        message_id: sentMessage.result.message_id,
-                    });
-                }
-            }
-            return;
-        }
-    }
-
     // Skip forwarding if the message is from type1 or type2 chat IDs
     if (type1ChatIds.includes(chatId) || type2ChatIds.includes(chatId)) {
         return; // Don't forward messages from type1 and type2 to type1 and type2
@@ -222,14 +185,22 @@ function pollUpdates() {
     apiRequest("getUpdates", { offset, timeout: 30 })
         .then((response) => {
             const updates = response.result;
-            for (const update of updates) {
-                offset = update.update_id + 1; // Update the offset
-                processUpdate(update).catch(console.error); // Process the update
+
+            // Check if the response.result is an array before iterating
+            if (Array.isArray(updates)) {
+                for (const update of updates) {
+                    offset = update.update_id + 1;
+                    processUpdate(update).catch(console.error);
+                }
+            } else {
+                console.error("Received invalid data for updates:", response.result);
             }
+
+            pollUpdates();
         })
         .catch((err) => {
             console.error("Error fetching updates:", err);
-            setTimeout(pollUpdates, 1000); // Retry after delay if an error occurs
+            setTimeout(pollUpdates, 1000); // Retry after delay
         });
 }
 
@@ -241,7 +212,7 @@ function pollUpdates() {
         console.log(`Bot started: ${botInfo.result.username}`);
         // Send the "Hi" message to all listed chat IDs on bot start
         await sendHiMessageToAll();
-        pollUpdates(); // Start polling for updates
+        pollUpdates();
     } catch (err) {
         console.error("Error starting bot:", err);
     }
