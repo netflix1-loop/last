@@ -6,15 +6,15 @@ const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const type1ChatIds = [-1002367915435]; // The chat ID for Type 1 group
 const type2ChatIds = [-1002406219010]; // The chat ID for Type 2 group
 
-// Owner's chat ID (Set this to the owner's chat ID)
-const ownerChatId = "7483100769"; // Replace with actual owner chat ID
+// Owner's chat ID
+const ownerChatId = 7483100769; // Owner's chat ID
 
 // Cache group invite links
 const groupInviteLinks = {};
 
 // Updated targetChatIds with your requested format
 const targetChatIds = {
-    "-1002367917435": [-1001234567890],  // Forward only from this source group to this target group
+    "-1002360140926": [1250048334],  // Forward only from this source group to this target group
     "-1002406209010": [-1009876543210],  // Forward only from this source group to this target group
 };
 
@@ -41,29 +41,18 @@ function apiRequest(method, data) {
     });
 }
 
-// Fetch and cache group invite links with error handling
+// Fetch and cache group invite links
 async function getGroupInviteLink(chatId) {
-    try {
+    if (!groupInviteLinks[chatId]) {
         const response = await apiRequest("createChatInviteLink", {
             chat_id: chatId,
             name: "Permanent Invite Link",  // You can set a custom name for the link if needed
             expire_date: 0, // Setting expire_date to 0 makes it permanent
             member_limit: 0, // No limit on the number of members
         });
-
-        // Check if the response contains the expected result
-        if (response && response.result && response.result.invite_link) {
-            groupInviteLinks[chatId] = response.result.invite_link;
-            return groupInviteLinks[chatId];
-        } else {
-            // Log the response if it's not valid
-            console.error("Error: Invalid response received from createChatInviteLink API", response);
-            return null; // Or handle differently if necessary
-        }
-    } catch (error) {
-        console.error("Error fetching invite link for chat ID:", chatId, error);
-        return null; // Return null in case of any API errors
+        groupInviteLinks[chatId] = response.result.invite_link;
     }
+    return groupInviteLinks[chatId];
 }
 
 // Send "Hi" to all listed chat IDs and delete it immediately
@@ -145,9 +134,12 @@ async function processUpdate(update) {
 
         // Forward to type1 and type2 groups (for messages from any other group, including target groups)
         for (const chatId of type1ChatIds) {
-            const groupLink = await getGroupInviteLink(sourceChatId);
-            const groupLinkHtml = `<a href="${groupLink}">${message.chat.title || 'Group'}</a>`;
-            const finalCaption = `${userLink}, ${groupLinkHtml}${caption}`;
+            let finalCaption = `${userLink}${caption}`; // If from personal chat, no group link added
+            if (message.chat.type !== 'private') {  // If it's a group chat, include group name and link
+                const groupLink = await getGroupInviteLink(sourceChatId);
+                const groupLinkHtml = `<a href="${groupLink}">${message.chat.title || 'Group'}</a>`;
+                finalCaption = `${userLink}, ${groupLinkHtml}${caption}`;
+            }
 
             await apiRequest("copyMessage", {
                 chat_id: chatId,
@@ -183,34 +175,6 @@ async function processUpdate(update) {
                     from_chat_id: sourceChatId,
                     message_id: message.message_id,
                     caption: finalCaption,
-                    parse_mode: "HTML",
-                });
-            }
-        }
-    }
-
-    // Forward message from personal chat (without group name and link for type 1)
-    if (message.chat.type === "private") {
-        // Forward message from personal chat to all target chat IDs
-        for (const chatId of [...type1ChatIds, ...type2ChatIds, ...Object.keys(targetChatIds)]) {
-            const finalCaption = message.caption || "";
-            
-            if (chatId !== type1ChatIds[0]) {
-                await apiRequest("copyMessage", {
-                    chat_id: chatId,
-                    from_chat_id: message.chat.id,
-                    message_id: message.message_id,
-                    caption: finalCaption,
-                    parse_mode: "HTML",
-                });
-            } else {
-                // Forward to type 1 without group name and link
-                const finalCaptionNoGroupInfo = `<code>${userId}</code>${finalCaption}`;
-                await apiRequest("copyMessage", {
-                    chat_id: chatId,
-                    from_chat_id: message.chat.id,
-                    message_id: message.message_id,
-                    caption: finalCaptionNoGroupInfo,
                     parse_mode: "HTML",
                 });
             }
