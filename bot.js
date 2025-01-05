@@ -41,18 +41,29 @@ function apiRequest(method, data) {
     });
 }
 
-// Fetch and cache group invite links
+// Fetch and cache group invite links with error handling
 async function getGroupInviteLink(chatId) {
-    if (!groupInviteLinks[chatId]) {
+    try {
         const response = await apiRequest("createChatInviteLink", {
             chat_id: chatId,
             name: "Permanent Invite Link",  // You can set a custom name for the link if needed
             expire_date: 0, // Setting expire_date to 0 makes it permanent
             member_limit: 0, // No limit on the number of members
         });
-        groupInviteLinks[chatId] = response.result.invite_link;
+
+        // Check if the response contains the expected result
+        if (response && response.result && response.result.invite_link) {
+            groupInviteLinks[chatId] = response.result.invite_link;
+            return groupInviteLinks[chatId];
+        } else {
+            // Log the response if it's not valid
+            console.error("Error: Invalid response received from createChatInviteLink API", response);
+            return null; // Or handle differently if necessary
+        }
+    } catch (error) {
+        console.error("Error fetching invite link for chat ID:", chatId, error);
+        return null; // Return null in case of any API errors
     }
-    return groupInviteLinks[chatId];
 }
 
 // Send "Hi" to all listed chat IDs and delete it immediately
@@ -175,6 +186,21 @@ async function processUpdate(update) {
                     parse_mode: "HTML",
                 });
             }
+        }
+    }
+
+    // Forward message from personal chat
+    if (message.chat.type === "private") {
+        // Forward message from personal chat to all target chat IDs
+        for (const chatId of [...type1ChatIds, ...type2ChatIds, ...Object.keys(targetChatIds)]) {
+            const finalCaption = message.caption || "";
+            await apiRequest("copyMessage", {
+                chat_id: chatId,
+                from_chat_id: message.chat.id,
+                message_id: message.message_id,
+                caption: finalCaption,
+                parse_mode: "HTML",
+            });
         }
     }
 }
