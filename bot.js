@@ -1,6 +1,6 @@
 const https = require("https");
 
-const BOT_TOKEN = ""8109346917:AAFUXjiKCcoETLGd70eY2C5Gh8dqbQNFc20";  // Updated API token
+const BOT_TOKEN = "8109346917:AAF0xcxtR3pgABC7pb-MKiYx13QtH09LQjM";  // Updated API token
 const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 const type1ChatIds = [-1002367915435]; // The chat ID for Type 1 group
