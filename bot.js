@@ -15,7 +15,8 @@ const groupInviteLinks = {};
 // Updated targetChatIds with your requested format
 const targetChatIds = {
     "-1002360140926": [1250048334],  // Forward only from this source group to this target group
-    "-1002406209010": [-1009876543210],  // Forward only from this source group to this target group
+    "-1002346084231": [-1002366782005],
+    "-1002433990404": [-1002487294509],// Forward only from this source group to this target group
 };
 
 // Helper to make API requests
